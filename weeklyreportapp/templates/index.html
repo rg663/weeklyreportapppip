@@ -1,0 +1,174 @@
+{% extends "common/base.html" %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}
+Weekly Report
+{% endblock %}
+
+{% block content %}
+
+<h1>Weekly Report</h1>
+<form>
+  <a class="btn btn-outline-secondary" onclick="javascript:window.print()" role="button"><i class="fas fa-print"
+      aria-hidden="true"></i> Print Report</a>
+  <hr>
+</form>
+<div class="card mb-3 border-primary">
+  <div class="card-header bg-primary text-white">
+    <i class="fas fa-server" aria-hidden="true"></i> All Allocations
+  </div>
+  <div class="card-body">
+    <table id="table1" class="table table-bordered dataTable no-footer">
+      <thead>
+        <tr>
+          <th>Allocation ID</th>
+          <th>Allocation Project Name</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for allocation in allocation_list %}
+        <tr>
+          <td>
+            <a href="{% url 'allocation-detail' allocation.pk %}">{{ allocation.id }}</a>
+          </td>
+          <td>
+            {{ allocation.project.title }}
+          </td>
+          <td>
+            {{ allocation.status }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card mb-3 border-primary">
+  <div class="card-header bg-primary text-white">
+    <i class="fas fa-server" aria-hidden="true"></i> All Resources
+  </div>
+  <div class="card-body">
+      <div id="myChart"></div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="card mb-3 border-primary">
+  <div class="card-header bg-primary text-white">
+    <i class="fas fa-users" aria-hidden="true"></i> User Activity
+  </div>
+  <div class="card-body">
+    {% if users_from_this_week|length > 1 %}
+    <div>
+      <h5>Users Who Logged In This Week</h5>
+      <hr>
+      <table id="table3" class="table table-bordered dataTable no-footer">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Last Login</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users_from_this_week %}
+          {% if user.get_full_name %}
+          <tr>
+            <td>{{ user.get_full_name }}</td>
+            <td>{{ user.last_login }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if all_other_users|length > 1 %}
+    <div>
+      <h5>Users Who Did Not Log In This Week</h5>
+      <hr>
+      <table id="table4" class="table table-bordered dataTable no-footer">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Last Login</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in all_other_users %}
+          {% if user.get_full_name %}
+          <tr>
+            <td>{{ user.get_full_name }}</td>
+            <td>{{ user.last_login }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-3 border-primary">
+  <div class="card-header bg-primary text-white">
+    <i class="fas fa-server" aria-hidden="true"></i> Allocations at a Glance
+  </div>
+  <div class="card-body">
+    <h6>Newly added allocations</h6>
+    {% for alloc in new_allocations %}
+    <i class="fas fa-plus-circle"></i>
+    <a href="{% url 'allocation-detail' alloc.pk %}">{{alloc.project.title}} [{{ alloc }}]: </a>Start date: {{ alloc.start_date }}
+    {% endfor %}
+    <hr>
+    <h6>Allocations expiring soon</h6>
+    {% for alloc in allocations_expiring_soon %}
+    <i class="fa fa-exclamation-circle"></i>
+    <a href="{% url 'allocation-detail' alloc.pk %}">{{alloc.project.title}} [{{ alloc }}]: </a>End date: {{ alloc.end_date }}
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  // var dataa = {{ projects }}
+  $(document).ready(function () {
+    $("#table1").DataTable({ searching: false, info: false });
+    $("#table2").DataTable({ searching: false, info: false });
+    $("#table3").DataTable();
+    $("#table4").DataTable();
+  })
+</script>
+
+<script>
+  $(document).ready(function () {
+    drawResources();
+  });
+
+  var res_types = {{ resource_types | safe }};
+  var data_var = {
+    "columns": res_types,
+    "type": "donut",
+  }
+
+  function drawResources() {
+    if (data_var['columns'].length != 0) {
+      var chart = c3.generate({
+        bindto: '#myChart',
+        data: data_var,
+        donut: {
+          title: "Resource Type Breakdown"
+        },
+        legend: {
+          item: {
+            onclick: function (id) { }
+          }
+        }
+      });
+    }
+  }
+
+</script>
+{% endblock %}
